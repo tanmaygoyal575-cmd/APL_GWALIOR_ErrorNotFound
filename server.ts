@@ -153,11 +153,8 @@ app.get("/api/health", (req, res) => {
 
 async function generateWithRobustFallbacks(client: GoogleGenAI, promptText: string): Promise<any> {
   const modelsToTry = [
-    "gemini-1.5-flash",
-    "gemini-2.0-flash",
-    "gemini-3.1-flash-lite",
-    "gemini-flash-latest",
-    "gemini-3.5-flash"
+    "gemini-2.5-flash",
+    "gemini-2.0-flash"
   ];
 
   let lastError: any = null;
@@ -257,12 +254,14 @@ Do NOT wrap your JSON in backticks or markdown code blocks (like \`\`\`json). Re
       } catch (err: any) {
         lastError = err;
         const errMsg = err?.message || String(err);
-        const isQuotaError = errMsg.includes("429") || errMsg.toLowerCase().includes("quota");
+        const isQuotaError = errMsg.includes("429") || errMsg.toLowerCase().includes("quota") || errMsg.toLowerCase().includes("billing") || errMsg.toLowerCase().includes("limit");
         
         console.warn(`ThirdEye Sandbox Node warning: Model ${model} attempt ${attempt} failed: ${errMsg.slice(0, 150)}`);
         
-        // If it's a quota error, don't bother retrying this model, move to next model
-        if (isQuotaError) break;
+        // If it's a quota error, throw immediately to activate local engine fallback instantly
+        if (isQuotaError) {
+          throw new Error("API Quota limits reached. Switching to local deterministic engine.");
+        }
 
         if (attempt < attempts) {
           await new Promise(resolve => setTimeout(resolve, 300 * attempt));
