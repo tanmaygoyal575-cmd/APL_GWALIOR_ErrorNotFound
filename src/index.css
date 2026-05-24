@@ -1,0 +1,138 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Lora:ital,wght@0,400..700;1,400..700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-serif: "Lora", Georgia, ui-serif, serif;
+}
+
+/* Premium Liquid Glass Layout Styles */
+.liquid-glass {
+  background: rgba(13, 19, 32, 0.45) !important;
+  backdrop-filter: blur(20px) saturate(210%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(210%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 
+    0 16px 40px 0 rgba(0, 0, 0, 0.55),
+    inset 0 1.5px 2px rgba(255, 255, 255, 0.18) !important;
+}
+
+.liquid-glass-hover {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.liquid-glass-hover:hover {
+  background: rgba(20, 29, 48, 0.55) !important;
+  border-color: rgba(255, 255, 255, 0.22) !important;
+  box-shadow: 
+    0 24px 48px 0 rgba(0, 0, 0, 0.65),
+    inset 0 1.5px 3px rgba(255, 255, 255, 0.25) !important;
+  transform: translateY(-2px);
+}
+
+.liquid-glass-strong {
+  background: rgba(8, 12, 22, 0.75) !important;
+  backdrop-filter: blur(32px) saturate(240%) !important;
+  -webkit-backdrop-filter: blur(32px) saturate(240%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  box-shadow: 
+    0 24px 64px 0 rgba(0, 0, 0, 0.75),
+    inset 0 1.5px 3px rgba(255, 255, 255, 0.25),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.4) !important;
+}
+
+.liquid-glass-pill {
+  background: rgba(255, 255, 255, 0.04) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.12) !important;
+}
+
+.liquid-glass-input {
+  background: rgba(4, 6, 14, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.09) !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.8) !important;
+}
+
+.liquid-glass-input:focus {
+  border-color: rgba(6, 182, 212, 0.5) !important;
+  box-shadow: 
+    inset 0 2px 4px rgba(0, 0, 0, 0.7),
+    0 0 18px rgba(6, 182, 212, 0.3) !important;
+}
+
+/* Gloss reflection overlays */
+.liquid-shine-bar {
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.2) 50%, transparent 100%);
+}
+
+.neon-text-glow-cyan {
+  text-shadow: 0 0 12px rgba(6, 182, 212, 0.5);
+}
+
+.neon-text-glow-orange {
+  text-shadow: 0 0 12px rgba(255, 77, 0, 0.5);
+}
+
+/* Custom glow borders */
+.glow-cyan-border {
+  border-color: rgba(6, 182, 212, 0.4) !important;
+  box-shadow: 0 6px 24px rgba(6, 182, 212, 0.2), inset 0 1px 1.5px rgba(255, 255, 255, 0.2) !important;
+}
+
+.glow-orange-border {
+  border-color: rgba(255, 77, 0, 0.4) !important;
+  box-shadow: 0 6px 24px rgba(255, 77, 0, 0.2), inset 0 1px 1.5px rgba(255, 255, 255, 0.2) !important;
+}
+
+.glow-violet-border {
+  border-color: rgba(139, 92, 246, 0.4) !important;
+  box-shadow: 0 6px 24px rgba(139, 92, 246, 0.2), inset 0 1px 1.5px rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Pure sleek custom thumb range handles */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 99px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2.5px solid #ff4d00;
+  box-shadow: 0 0 12px #ff4d00, 0 1px 3px rgba(0,0,0,0.6);
+  cursor: pointer;
+  transition: transform 0.15s, background-color 0.15s;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.25);
+  background: #ff4d00;
+}
+
+/* Custom futuristic scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0,0,0,0.15);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.08);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #ff4d00;
+}

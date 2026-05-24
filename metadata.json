@@ -1,0 +1,6 @@
+{
+  "name": "ThirdEye Sandbox",
+  "description": "A luxury Cricket Physics & Strategy Sandbox that computes physical ball trajectories, dynamic field maps, and professional AI coaching analytics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
