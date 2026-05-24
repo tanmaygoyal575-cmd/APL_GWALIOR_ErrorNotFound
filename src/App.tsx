@@ -25,7 +25,10 @@ import {
   Layers,
   Swords,
   Sliders,
-  History
+  History,
+  Users,
+  Cloud,
+  Award
 } from "lucide-react";
 
 import { CricAIScenario, SpinType, PitchType, BatterIntent } from "./types";
@@ -34,6 +37,17 @@ import { PitchVisualizer } from "./components/PitchVisualizer";
 import { FieldMapVisualizer } from "./components/FieldMapVisualizer";
 import { AIPredictionCockpit } from "./components/AIPredictionCockpit";
 import { EngineOrchestrator } from "./engines/Orchestrator";
+
+// Premium modular integration systems
+import { useMatchData } from "./hooks/useMatchData";
+import { useWeatherData } from "./hooks/useWeatherData";
+import { usePitchAnalysis } from "./hooks/usePitchAnalysis";
+import { PlayerService } from "./services/playerService";
+import { MatchDataService } from "./services/matchService";
+import { PLAYER_PROFILES } from "./data/playerProfiles";
+import { HISTORICAL_MOMENTS } from "./data/historicalMatches";
+import { STADIUM_PRESETS } from "./services/weatherService";
+
 
 export default function App() {
   // Input parameters state
@@ -72,8 +86,20 @@ export default function App() {
   // Advanced toggles
   const [showAdvancedTuner, setShowAdvancedTuner] = useState<boolean>(false);
 
+  // Dynamic modular intelligence feeds & states
+  const { liveMatches, activeMatch, setActiveMatch } = useMatchData();
+  const { selectedStadium, currentWeather, stadiumsList, changeStadium } = useWeatherData();
+
+  // Matchup configuration selectors
+  const [selectedBatterId, setSelectedBatterId] = useState<string>("virat-kohli");
+  const [selectedBowlerId, setSelectedBowlerId] = useState<string>("shane-warne");
+
+  // Automated high-fidelity pitch wear calculations derived from climate modifiers
+  const pitchWear = usePitchAnalysis(pitchType, ballOversUsed, currentWeather?.environmentalInfluence?.pitchDryRate ?? 1);
+
   // Orchestrated AI dynamic analysis state
   const [assessment, setAssessment] = useState<any>(null);
+
 
   // Sync secondary parameters when main types are updated
   useEffect(() => {
@@ -123,6 +149,25 @@ export default function App() {
     setBallHardnessScore(calculatedHardness);
   }, [ballOversUsed]);
 
+  // Sync weather states dynamically with chosen international stadium climate
+  useEffect(() => {
+    if (currentWeather) {
+      setAirTemperature(currentWeather.temperature);
+      setAirHumidity(currentWeather.humidity);
+      setWindSpeed(currentWeather.windSpeed);
+      setWindDirection(currentWeather.windDirection as any);
+      setBallMoistureWet(currentWeather.environmentalInfluence.dewFactorPct);
+    }
+  }, [currentWeather]);
+
+  // Auto-tune sandboxed surface parameters when pitch wear calculations refresh
+  useEffect(() => {
+    if (pitchWear) {
+      setPitchHardness(Math.round(pitchWear.currentFriction * 100));
+      setPitchCracks(Math.min(100, Math.round(pitchWear.crackWidthMm * 8.3)));
+    }
+  }, [pitchWear]);
+
   // Real-time local processing orchestrator loop
   useEffect(() => {
     const res = EngineOrchestrator.processAll({
@@ -163,7 +208,7 @@ export default function App() {
 
   // Custom text query state
   const [customQuery, setCustomQuery] = useState<string>("");
-  const [activeTab, setActiveTab] = useState<"sandbox" | "terminal" | "presets">("presets");
+  const [activeTab, setActiveTab] = useState<"sandbox" | "terminal" | "presets" | "live" | "matchups">("presets");
 
   // Output scenario state
   const [scenario, setScenario] = useState<CricAIScenario | null>(null);
@@ -372,45 +417,78 @@ export default function App() {
         <section className="col-span-1 xl:col-span-5 flex flex-col gap-6.5">
           
           {/* TAB HEADERS (VisionOS-inspired rounded segment controller) */}
-          <div className="liquid-glass p-1.5 rounded-2xl grid grid-cols-3 gap-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.4)] relative overflow-hidden">
+          <div className="liquid-glass p-1.5 rounded-2xl grid grid-cols-5 gap-1 shadow-[0_8px_32px_rgba(0,0,0,0.4)] relative overflow-hidden">
             {/* Top glass bevel shine */}
             <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/15 to-transparent pointer-events-none" />
             
             <button
               id="tab-presets"
               onClick={() => setActiveTab("presets")}
-              className={`py-2 px-1 text-[10px] sm:text-xs font-mono uppercase tracking-widest rounded-xl font-bold flex flex-col sm:flex-row items-center justify-center gap-2.5 transition-all duration-300 cursor-pointer ${
+              className={`py-2 px-0.5 text-[9px] sm:text-xs font-mono uppercase tracking-widest rounded-xl font-bold flex flex-col items-center justify-center gap-1 transition-all duration-300 cursor-pointer ${
                 activeTab === "presets"
                   ? "bg-white/[0.12] text-white border border-white/10 shadow-[0_2px_12px_rgba(255,73,0,0.2)]"
                   : "text-[#8E94B0] hover:text-white hover:bg-white/[0.03]"
               }`}
             >
               <History className={`w-3.5 h-3.5 ${activeTab === "presets" ? "text-[#FF4D00]" : "text-[#8E94B0]"}`} />
-              <span>PRESETS</span>
+              <span className="hidden sm:inline">PRESETS</span>
+              <span className="inline sm:hidden">PRST</span>
             </button>
+
             <button
               id="tab-sandbox"
               onClick={() => setActiveTab("sandbox")}
-              className={`py-2 px-1 text-[10px] sm:text-xs font-mono uppercase tracking-widest rounded-xl font-bold flex flex-col sm:flex-row items-center justify-center gap-2.5 transition-all duration-300 cursor-pointer ${
+              className={`py-2 px-0.5 text-[9px] sm:text-xs font-mono uppercase tracking-widest rounded-xl font-bold flex flex-col items-center justify-center gap-1 transition-all duration-300 cursor-pointer ${
                 activeTab === "sandbox"
                   ? "bg-white/[0.12] text-white border border-white/10 shadow-[0_2px_12px_rgba(255,73,0,0.2)]"
                   : "text-[#8E94B0] hover:text-white hover:bg-white/[0.03]"
               }`}
             >
               <Sliders className={`w-3.5 h-3.5 ${activeTab === "sandbox" ? "text-[#FF4D00]" : "text-[#8E94B0]"}`} />
-              <span>HAWKEYE</span>
+              <span className="hidden sm:inline">HAWKEYE</span>
+              <span className="inline sm:hidden">HAWK</span>
             </button>
+
+            <button
+              id="tab-live"
+              onClick={() => setActiveTab("live")}
+              className={`py-2 px-0.5 text-[9px] sm:text-xs font-mono uppercase tracking-widest rounded-xl font-bold flex flex-col items-center justify-center gap-1 transition-all duration-300 cursor-pointer ${
+                activeTab === "live"
+                  ? "bg-white/[0.12] text-white border border-white/10 shadow-[0_2px_12px_rgba(255,73,0,0.2)]"
+                  : "text-[#8E94B0] hover:text-white hover:bg-white/[0.03]"
+              }`}
+            >
+              <Activity className={`w-3.5 h-3.5 ${activeTab === "live" ? "text-[#FF4D00]" : "text-[#8E94B0]"}`} />
+              <span className="hidden sm:inline">LIVE MATCH</span>
+              <span className="inline sm:hidden">LIVE</span>
+            </button>
+
+            <button
+              id="tab-matchups"
+              onClick={() => setActiveTab("matchups")}
+              className={`py-2 px-0.5 text-[9px] sm:text-xs font-mono uppercase tracking-widest rounded-xl font-bold flex flex-col items-center justify-center gap-1 transition-all duration-300 cursor-pointer ${
+                activeTab === "matchups"
+                  ? "bg-white/[0.12] text-white border border-white/10 shadow-[0_2px_12px_rgba(255,73,0,0.2)]"
+                  : "text-[#8E94B0] hover:text-white hover:bg-white/[0.03]"
+              }`}
+            >
+              <Swords className={`w-3.5 h-3.5 ${activeTab === "matchups" ? "text-[#FF4D00]" : "text-[#8E94B0]"}`} />
+              <span className="hidden sm:inline">MATCHUPS</span>
+              <span className="inline sm:hidden">VS</span>
+            </button>
+
             <button
               id="tab-terminal"
               onClick={() => setActiveTab("terminal")}
-              className={`py-2 px-1 text-[10px] sm:text-xs font-mono uppercase tracking-widest rounded-xl font-bold flex flex-col sm:flex-row items-center justify-center gap-2.5 transition-all duration-300 cursor-pointer ${
+              className={`py-2 px-0.5 text-[9px] sm:text-xs font-mono uppercase tracking-widest rounded-xl font-bold flex flex-col items-center justify-center gap-1 transition-all duration-300 cursor-pointer ${
                 activeTab === "terminal"
                   ? "bg-white/[0.12] text-white border border-white/10 shadow-[0_2px_12px_rgba(255,73,0,0.2)]"
                   : "text-[#8E94B0] hover:text-white hover:bg-white/[0.03]"
               }`}
             >
               <Sparkles className={`w-3.5 h-3.5 ${activeTab === "terminal" ? "text-[#FF4D00]" : "text-[#8E94B0]"}`} />
-              <span>INQUIRY</span>
+              <span className="hidden sm:inline">INQUIRY</span>
+              <span className="inline sm:hidden">ASK</span>
             </button>
           </div>
 
@@ -509,12 +587,322 @@ export default function App() {
                 </div>
               )}
 
+              {/* VIEW: LIVE MATCH INTELLIGENCE */}
+              {activeTab === "live" && (
+                <div className="flex flex-col gap-5 flex-1 w-full">
+                  <div className="flex items-center gap-2.5 mb-1 bg-white/[0.02] py-2 px-3.5 rounded-xl border border-white/[0.05]">
+                    <Activity className="w-4 h-4 text-[#FF4D00]" />
+                    <span className="text-[#FF4D00] text-[10px] font-mono font-bold tracking-widest uppercase">LIVE CHASE CORE</span>
+                  </div>
+
+                  <p className="text-xs text-[#8E94B0] leading-relaxed">
+                    Examine live ball-by-ball matches with simulated real-time data feeds, real-time commentary streams, and dynamic win probabilities.
+                  </p>
+
+                  {/* Active Match Selector */}
+                  <div className="grid grid-cols-2 gap-2">
+                    {liveMatches.map((m) => {
+                      const isSel = activeMatch?.id === m.id;
+                      return (
+                        <button
+                          key={m.id}
+                          onClick={() => setActiveMatch(m)}
+                          className={`p-3 rounded-xl border text-[10.5px] font-mono font-medium tracking-wide transition-all duration-300 cursor-pointer ${
+                            isSel
+                              ? "bg-white/[0.1] text-white border-white/20 shadow-md"
+                              : "bg-white/[0.015] border-white/[0.04] text-[#8E94B0] hover:bg-white/[0.03]"
+                          }`}
+                        >
+                          <div className="truncate text-center">
+                            {m.teams.batting.short} vs {m.teams.bowling.short}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {activeMatch && (
+                    <div className="flex flex-col gap-4">
+                      {/* Live Score Glass Card */}
+                      <div className="p-5 rounded-2xl bg-black/45 border border-white/[0.08] relative overflow-hidden flex flex-col gap-3">
+                        <div className="flex justify-between items-center border-b border-white/[0.06] pb-3">
+                          <span className="text-[10px] text-emerald-400 font-mono font-black tracking-widest uppercase">▲ LIVE TELEMETRY</span>
+                          <span className="text-[10px] font-mono text-[#8E94B0]">{activeMatch.venue}</span>
+                        </div>
+
+                        <div className="flex justify-between items-baseline">
+                          <div>
+                            <span className="text-3xl font-bold text-white tracking-tight">
+                              {activeMatch.teams.batting.name} {activeMatch.teams.batting.score}
+                            </span>
+                            <span className="text-xs font-mono text-[#8E94B0] ml-2">({activeMatch.teams.batting.overs} Ovs)</span>
+                          </div>
+                          {activeMatch.teams.batting.runsNeeded !== undefined && (
+                            <span className="bg-[#FF4D00]/10 text-[#FF4D00] border border-[#FF4D00]/20 px-2.5 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase tracking-wider">
+                              NEED {activeMatch.teams.batting.runsNeeded} RUNS
+                            </span>
+                          )}
+                        </div>
+
+                        {/* RRR vs CRR and Probabilities */}
+                        <div className="grid grid-cols-2 gap-3.5 pt-1">
+                          <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.04] flex flex-col justify-center">
+                            <span className="text-[9px] font-mono text-[#8E94B0] uppercase font-bold">Required Rate</span>
+                            <span className="text-sm font-semibold font-mono text-white mt-0.5">
+                              {activeMatch.liveState.requiredRunRate ?? "N/A"}
+                            </span>
+                          </div>
+                          <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.04] flex flex-col justify-center">
+                            <span className="text-[9px] font-mono text-[#8E94B0] uppercase font-bold">Current RR</span>
+                            <span className="text-sm font-semibold font-mono text-emerald-400 mt-0.5">
+                              {activeMatch.liveState.runRate}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="text-[10px] font-mono text-cyan-400 text-center py-1 bg-white/[0.02] border border-white/[0.04] rounded-lg">
+                          📢 STATUS: {activeMatch.liveState.status}
+                        </div>
+
+                        {/* Live batsman vs bowler */}
+                        <div className="px-1 py-1.5 flex justify-between items-center text-xs font-mono border-t border-white/[0.06] pt-3 text-[#A2A9C5]">
+                          <div>🏏 <span className="text-white font-bold">{activeMatch.liveState.currentBatter}</span> ({activeMatch.liveState.currentBatterRuns} runs)</div>
+                          <div>🥎 <span className="text-white font-bold">{activeMatch.liveState.currentBowler}</span></div>
+                        </div>
+                      </div>
+
+                      {/* Advanced Commentator Subsystem */}
+                      <div className="flex flex-col gap-2">
+                        <span className="text-[9.5px] font-mono text-[#8E94B0] tracking-wider uppercase px-1 font-bold">COMMENTARY & LIVE OVER GRAPH</span>
+                        
+                        {/* Highlights balls indicator circle graphics */}
+                        <div className="flex gap-2 p-3 bg-white/[0.02] border border-white/[0.04] rounded-xl justify-center items-center">
+                          {activeMatch.liveState.lastEvents.map((ev, i) => (
+                            <span key={i} className={`w-6 h-6 rounded-full flex items-center justify-center font-mono font-bold text-[10px] shadow-sm ${
+                              ev === "W" ? "bg-red-500/20 text-red-400 border border-red-500/30" : 
+                              ev === "6" || ev === "4" ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" : 
+                              "bg-white/5 text-[#D2D5E3] border border-white/10"
+                            }`}>
+                              {ev}
+                            </span>
+                          ))}
+                        </div>
+
+                        <div className="max-h-[160px] overflow-y-auto pr-1 flex flex-col gap-2 scrollbar-thin">
+                          {activeMatch.commentary.map((line, idx) => (
+                            <div key={idx} className="p-3 rounded-xl bg-white/[0.01] border border-white/[0.04] flex flex-col gap-1 relative overflow-hidden">
+                              <div className="flex justify-between text-[10px] font-mono">
+                                <span className="text-[#FF4D00] font-black">OVER: {line.timestamp}</span>
+                                <span className={`font-bold uppercase ${line.type === "critical" ? "text-rose-400" : line.type === "tactical" ? "text-cyan-400" : "text-[#8E94B0]"}`}>
+                                  {line.type}
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-[#D2D5E3] leading-relaxed font-sans">{line.text}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Real-time event simulation trigger */}
+                      <button
+                        onClick={() => {
+                          setLoading(true);
+                          // Increments live simulation over event chain
+                          const nextBall = MatchDataService.advanceMatchBall(activeMatch.id);
+                          if (nextBall) {
+                            setActiveMatch(nextBall);
+                            // Set Hawkeye parameters to fit this live ball!
+                            setBallSpeed(nextBall.teams.batting.runs % 2 !== 0 ? 141 : 133);
+                            // Adjust pitch based on stadium atmosphere
+                            if (nextBall.venue.includes("Lord's")) {
+                              setPitchType("Green/Grassy");
+                            } else if (nextBall.venue.includes("Narendra Modi")) {
+                              setPitchType("Dusty/Dry");
+                            } else {
+                              setPitchType("Balanced");
+                            }
+                          }
+                          setLoading(false);
+                        }}
+                        className="p-3.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/15 border border-emerald-500/25 text-emerald-400 font-mono text-center text-xs font-bold transition-all duration-300 cursor-pointer flex items-center justify-center gap-2 shadow-[0_0_12px_rgba(16,185,129,0.1)] active:scale-[0.985]"
+                      >
+                        <RefreshCw className="w-3.5 h-3.5" />
+                        <span>SIMULATE NEXT LIVE BALL</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* VIEW: HEAD-TO-HEAD TACTICAL MATCHUPS */}
+              {activeTab === "matchups" && (
+                <div className="flex flex-col gap-5 flex-1 w-full">
+                  <div className="flex items-center gap-2.5 mb-1 bg-white/[0.02] py-2 px-3.5 rounded-xl border border-white/[0.05]">
+                    <Swords className="w-4 h-4 text-[#FF4D00]" />
+                    <span className="text-[#FF4D00] text-[10px] font-mono font-bold tracking-widest uppercase">HEAD-TO-HEAD DUEL SCOUT</span>
+                  </div>
+
+                  <p className="text-xs text-[#8E94B0] leading-relaxed">
+                    Run predictive tactical matchup modeling on players against each other on this current pitch formulation.
+                  </p>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    {/* Batter Select Box */}
+                    <div className="flex flex-col gap-1.5">
+                      <span className="text-[9px] font-mono text-[#8E94B0] uppercase font-bold">SELECT BATTER</span>
+                      <select
+                        value={selectedBatterId}
+                        onChange={(e) => setSelectedBatterId(e.target.value)}
+                        className="bg-black text-white font-semibold border border-white/[0.1] rounded-xl p-2.5 text-xs focus:outline-none focus:border-[#FF4D00] cursor-pointer"
+                      >
+                        {Object.values(PLAYER_PROFILES)
+                          .filter(p => p.role === "Batsman" || p.role === "Wicket-Keeper Batsman" || p.role === "All-Rounder")
+                          .map(p => (
+                            <option key={p.id} value={p.id}>{p.name}</option>
+                          ))}
+                      </select>
+                    </div>
+
+                    {/* Bowler Select Box */}
+                    <div className="flex flex-col gap-1.5">
+                      <span className="text-[9px] font-mono text-[#8E94B0] uppercase font-bold">SELECT BOWLER</span>
+                      <select
+                        value={selectedBowlerId}
+                        onChange={(e) => setSelectedBowlerId(e.target.value)}
+                        className="bg-black text-white font-semibold border border-white/[0.1] rounded-xl p-2.5 text-xs focus:outline-none focus:border-[#FF4D00] cursor-pointer"
+                      >
+                        {Object.values(PLAYER_PROFILES)
+                          .filter(p => p.role === "Bowler" || p.role === "All-Rounder")
+                          .map(p => (
+                            <option key={p.id} value={p.id}>{p.name}</option>
+                          ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Matchup Report Display Card */}
+                  {(() => {
+                    const bat = PLAYER_PROFILES[selectedBatterId];
+                    const bowl = PLAYER_PROFILES[selectedBowlerId];
+                    
+                    if (!bat || !bowl) return null;
+
+                    const matchReport = PlayerService.analyzeMatchup(
+                      selectedBatterId,
+                      selectedBowlerId,
+                      pitchType,
+                      ballOversUsed
+                    );
+
+                    const isBatterAdv = matchReport.matchupCoefficient > 50;
+                    const advantageSide = isBatterAdv ? "Batter" : "Bowler";
+                    const advantageScore = isBatterAdv ? matchReport.batterEdgeIndex : matchReport.bowlerEdgeIndex;
+                    
+                    // Detect if the bowler style exploits any known weakness of the batter
+                    const weaknessExploited = bat.weaknesses.some(w => 
+                      w.toLowerCase().includes("spin") && bowl.bowlingStyle.toLowerCase().includes("spin") ||
+                      w.toLowerCase().includes("bouncer") && bowl.bowlingStyle.toLowerCase().includes("fast") ||
+                      w.toLowerCase().includes("swing") && bowl.bowlingStyle.toLowerCase().includes("fast")
+                    );
+
+                    return (
+                      <div className="flex flex-col gap-3.5">
+                        <div className="p-4 rounded-xl bg-white/[0.015] border border-white/[0.05] flex flex-col gap-2">
+                          <div className="flex justify-between items-center text-[10px] font-mono border-b border-white/[0.04] pb-2">
+                            <span className="font-bold text-[#8E94B0]">ADVANTAGE SCORECARD</span>
+                            <span className={advantageSide === "Batter" ? "text-emerald-400 font-black" : "text-rose-400 font-black"}>
+                              {advantageSide.toUpperCase()} ({advantageScore}%)
+                            </span>
+                          </div>
+
+                          <div className="flex items-center justify-between gap-1 mt-1 text-xs">
+                            <div className="flex flex-col">
+                              <span className="text-white font-bold">{bat.name}</span>
+                              <span className="text-[9.5px] font-mono text-cyan-400">SR {bat.stats.strikeRate} / AVG {bat.stats.battingAverage}</span>
+                            </div>
+                            <span className="font-mono text-[9px] text-[#8E94B0] uppercase px-2 py-0.5 bg-white/5 rounded">VS</span>
+                            <div className="text-right flex flex-col">
+                              <span className="text-white font-bold">{bowl.name}</span>
+                              <span className="text-[9.5px] font-mono text-amber-300">Eco {bowl.stats.bowlingEconomy ?? "N/A"} / Avg {bowl.stats.bowlingAverage ?? "N/A"}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Weakness match alerts */}
+                        {weaknessExploited && (
+                          <div className="bg-[#1f090d]/60 border border-red-500/15 text-red-200 text-xs px-4 py-3 rounded-xl flex flex-col gap-1 relative overflow-hidden">
+                            <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-red-500" />
+                            <span className="text-red-400 text-[10px] font-mono font-bold tracking-wider uppercase">⚠️ MATCHUP THREAT DETECTED</span>
+                            <span className="text-[11px] leading-relaxed font-sans">{bat.name}'s susceptibility to <span className="font-bold underline">{bat.weaknesses[0]}</span> correlates directly with {bowl.name}'s style!</span>
+                          </div>
+                        )}
+
+                        {/* Tactical advice snippet box */}
+                        <div className="p-4 rounded-xl bg-[#030d22]/55 border border-cyan-500/10 text-[#D2D5E3] text-xs">
+                          <span className="text-[9px] font-mono text-[#FF4D00] font-black uppercase tracking-widest block mb-1.5">♟️ COGNITIVE MATCHUP COUNTER COUNSEL</span>
+                          <p className="text-[11px] leading-relaxed font-sans mt-1">
+                            {matchReport.tacticalScoutingReport}
+                          </p>
+
+                          {/* Suggested Delivery Vector Hotspot Details */}
+                          <div className="mt-3 py-2 border-t border-white/[0.05] grid grid-cols-2 gap-1 font-mono text-[9.5px]">
+                            <div>🎯 Bowling Target: <span className="text-[#FF4D00] font-bold">{matchReport.recommendedDelivery}</span></div>
+                            <div className="text-right">🏹 Batter Stance: <span className="text-emerald-400 font-bold">{matchReport.recommendedBatterPosture}</span></div>
+                          </div>
+                        </div>
+
+                        {/* Setup sandbox parameters button */}
+                        <button
+                          onClick={() => {
+                            // Synchronise parameters with bowler traits and striker style
+                            setBallSpeed(bowl.bowlingStyle.includes("Fast") ? 142 : 92);
+                            setSpinType(bowl.bowlingStyle.includes("Leg-Spin") ? "Leg-Break" : bowl.bowlingStyle.includes("Off-Break") ? "Off-Break" : "Swing-Only");
+                            setBatterIntent(bat.strengths[0].toLowerCase().includes("finishing") || bat.strengths[0].toLowerCase().includes("helicopter") ? "Ultra-Attacking" : "Balanced");
+                            setActiveTab("sandbox");
+                          }}
+                          className="p-2.5 rounded-xl bg-[#FF4D00]/10 hover:bg-[#FF4D00]/15 border border-[#FF4D00]/25 text-[#FF4D00] text-[10.5px] font-mono text-center font-bold transition-all duration-300 hover:scale-[1.01]"
+                        >
+                          APPLY PLAYER ATTRIBUTES TO SLIDERS
+                        </button>
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
+
               {/* VIEW 2: HARDWARE SANDBOX SLIDER PANEL */}
               {activeTab === "sandbox" && (
                 <div className="flex flex-col gap-5 flex-1 w-full">
                   <div className="flex items-center gap-2.5 mb-1 bg-white/[0.02] py-2 px-3.5 rounded-xl border border-white/[0.05]">
                     <Sliders className="w-4 h-4 text-[#FF4D00]" />
                     <span className="text-[#FF4D00] text-[10px] font-mono font-bold tracking-widest uppercase">HAWKEYE CONTROLS</span>
+                  </div>
+
+                  {/* Climate Center Preset Selector */}
+                  <div className="flex flex-col gap-2 p-4 rounded-xl bg-white/[0.015] border border-white/[0.05] relative overflow-hidden">
+                    <span className="text-[9.5px] font-mono text-[#8E94B0] uppercase tracking-wider font-bold">🏟️ ATMOSPHERIC ENVIRONMENT STATION</span>
+                    <select
+                      value={selectedStadium}
+                      onChange={(e) => {
+                        changeStadium(e.target.value);
+                      }}
+                      className="bg-black/95 text-white font-bold border border-white/[0.1] rounded-xl p-2.5 text-xs cursor-pointer focus:outline-none focus:border-[#FF4D00]"
+                    >
+                      {stadiumsList.map(st => (
+                        <option key={st.id} value={st.id}>{st.stadiumName} ({st.city})</option>
+                      ))}
+                    </select>
+
+                    {/* Active Climate Modifiers Reading */}
+                    <div className="grid grid-cols-3 gap-2 mt-1 px-1 font-mono text-[9px] text-white/50">
+                      <div>🌡️ Temp: <span className="text-white font-bold">{currentWeather?.temperature ?? 30}°C</span></div>
+                      <div>💧 Humid: <span className="text-white font-bold">{currentWeather?.humidity ?? 60}%</span></div>
+                      <div>🍃 Wind: <span className="text-white font-bold">{currentWeather?.windSpeed ?? 10} KPH</span></div>
+                    </div>
+
+                    <div className="text-[9.5px] font-serif italic text-cyan-400 border-t border-white/[0.03] pt-2 mt-1">
+                      🍂 Wind Drift Shift Index: <span className="text-white font-mono font-bold">{((currentWeather?.environmentalInfluence?.aerodynamicDriftModifier ?? 1) * 100).toFixed(0)}%</span> / Pitch Deterioration: <span className="text-white font-mono font-bold">{currentWeather?.environmentalInfluence?.pitchDryRate ?? 1}x</span>
+                    </div>
                   </div>
 
                   {/* Velocity Slider Card */}
