@@ -251,8 +251,11 @@ export default function App() {
         body: JSON.stringify(payload),
       });
 
-      if (!response.ok) {
-        throw new Error("Simulation server returned a non-ok stream code.");
+      const contentType = response.headers.get("content-type");
+      if (!response.ok || !contentType || !contentType.includes("application/json")) {
+        const errorText = await response.text();
+        console.error("Simulation Server Error Response:", errorText.slice(0, 500));
+        throw new Error(`Simulation server error (${response.status}): Expected JSON but received ${contentType || 'unknown'}`);
       }
 
       const parsed: CricAIScenario = await response.json();

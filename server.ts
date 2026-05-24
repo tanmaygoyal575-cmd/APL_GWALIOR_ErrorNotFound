@@ -153,9 +153,11 @@ app.get("/api/health", (req, res) => {
 
 async function generateWithRobustFallbacks(client: GoogleGenAI, promptText: string): Promise<any> {
   const modelsToTry = [
-    "gemini-3.5-flash",
+    "gemini-1.5-flash",
+    "gemini-2.0-flash",
     "gemini-3.1-flash-lite",
-    "gemini-flash-latest"
+    "gemini-flash-latest",
+    "gemini-3.5-flash"
   ];
 
   let lastError: any = null;
@@ -255,7 +257,13 @@ Do NOT wrap your JSON in backticks or markdown code blocks (like \`\`\`json). Re
       } catch (err: any) {
         lastError = err;
         const errMsg = err?.message || String(err);
+        const isQuotaError = errMsg.includes("429") || errMsg.toLowerCase().includes("quota");
+        
         console.warn(`ThirdEye Sandbox Node warning: Model ${model} attempt ${attempt} failed: ${errMsg.slice(0, 150)}`);
+        
+        // If it's a quota error, don't bother retrying this model, move to next model
+        if (isQuotaError) break;
+
         if (attempt < attempts) {
           await new Promise(resolve => setTimeout(resolve, 300 * attempt));
         }
@@ -270,13 +278,13 @@ app.post("/api/simulate", async (req, res) => {
   const { query, parameters } = req.body;
   const client = getGenAI();
 
-  // If no Gemini API Client is active, use deterministic fallback
-  if (!client) {
-    const fallbackData = generateLocalFallback(query || "", parameters);
-    return res.json(fallbackData);
-  }
-
   try {
+    // If no Gemini API Client is active, use deterministic fallback
+    if (!client) {
+      const fallbackData = generateLocalFallback(query || "", parameters);
+      return res.json(fallbackData);
+    }
+    
     let promptText = "";
     if (query) {
       promptText = `User has requested a cricket physics & tactical simulation for this specific scenario: "${query}".

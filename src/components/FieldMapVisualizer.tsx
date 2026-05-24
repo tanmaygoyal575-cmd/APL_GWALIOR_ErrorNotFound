@@ -7,7 +7,7 @@ interface FieldMapVisualizerProps {
 }
 
 export const FieldMapVisualizer: React.FC<FieldMapVisualizerProps> = ({
-  fielding_adjustments,
+  fielding_adjustments = [],
 }) => {
   // Static positions on our 300x300 cricket fielding oval
   const defaultFielders = [
@@ -30,6 +30,7 @@ export const FieldMapVisualizer: React.FC<FieldMapVisualizerProps> = ({
 
   // Map text criteria to highlight corresponding fielders
   const checkHighlights = (key: string) => {
+    if (!fielding_adjustments || !Array.isArray(fielding_adjustments)) return false;
     const combinedText = fielding_adjustments.join(" ").toLowerCase();
     
     if (key === "slip" && (combinedText.includes("slip") || combinedText.includes("glove edge") || combinedText.includes("cather"))) return true;
